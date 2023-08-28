@@ -7,9 +7,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.DatePicker
+import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import com.google.android.play.integrity.internal.m
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import com.yndoo.diet_memo.databinding.ActivityMainBinding
 import java.util.Calendar
 import java.util.GregorianCalendar
@@ -29,10 +32,11 @@ class MainActivity : AppCompatActivity() {
             val mBuilder = AlertDialog.Builder(this)
                 .setView(mDialogView)
                 .setTitle("운동 메모 다이얼로그")
-            val mAletDialog = mBuilder.show()
+            val mAlertDialog = mBuilder.show()
 
+            var dateText = ""
 
-            val DateSetBtn = mAletDialog.findViewById<Button>(R.id.dateSelectBtn)
+            val DateSetBtn = mAlertDialog.findViewById<Button>(R.id.dateSelectBtn)
 
             DateSetBtn?.setOnClickListener {
 
@@ -48,14 +52,24 @@ class MainActivity : AppCompatActivity() {
                         Log.d("MAIN", "${year}, ${month+1}, ${dayOfMonth}")
 
                         DateSetBtn.setText("${year}/${month+1}/${dayOfMonth}")
+                        dateText = "${year}/${month+1}/${dayOfMonth}"
                     }
 
                 }, year, month, date)
                 dlg.show()
             }
-            val saveBtn = mAletDialog.findViewById<Button>(R.id.saveBtn)
+            val saveBtn = mAlertDialog.findViewById<Button>(R.id.saveBtn)
             saveBtn?.setOnClickListener {
+                val dietMemo = mAlertDialog.findViewById<EditText>(R.id.dietMemo)?.text.toString()
 
+                val model = DataModel(dateText, dietMemo)
+
+                val database = Firebase.database
+                val myRef = database.getReference("myMemo")
+
+                myRef.push().setValue(model)
+
+                mAlertDialog.dismiss()
             }
         }
     }
