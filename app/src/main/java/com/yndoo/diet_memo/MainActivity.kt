@@ -99,9 +99,10 @@ class MainActivity : AppCompatActivity() {
             // 다이얼로그의 저장 버튼 클릭시
             val saveBtn = mAlertDialog.findViewById<Button>(R.id.saveBtn)
             saveBtn?.setOnClickListener {
+                val workoutMemo = mAlertDialog.findViewById<EditText>(R.id.workoutMemo)?.text.toString()
                 val dietMemo = mAlertDialog.findViewById<EditText>(R.id.dietMemo)?.text.toString()
 
-                val model = DataModel(dateText, dietMemo)
+                val model = DataModel(dateText, workoutMemo, dietMemo)
 
                 val database = Firebase.database
                 val myRef = database.getReference("myMemo").child(Firebase.auth.currentUser!!.uid)

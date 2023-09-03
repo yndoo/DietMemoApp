@@ -28,10 +28,12 @@ class ListViewAdapter(val List: MutableList<DataModel>): BaseAdapter() {
 
         }
         val date = convertView?.findViewById<TextView>(R.id.listViewDateArea)
-        val memo = convertView?.findViewById<TextView>(R.id.listViewMemoArea)
+        val workout = convertView?.findViewById<TextView>(R.id.listViewMemoArea1)
+        val diet = convertView?.findViewById<TextView>(R.id.listViewMemoArea2)
 
         date!!.text = List[position].date
-        memo!!.text = List[position].memo
+        workout!!.text = List[position].workout
+        diet!!.text = List[position].dietmemo
 
         return convertView!!
     }
