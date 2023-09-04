@@ -1,6 +1,7 @@
 package com.yndoo.diet_memo
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -112,6 +113,11 @@ class MainActivity : AppCompatActivity() {
                 // 저장했으면 다이얼로그 닫기
                 mAlertDialog.dismiss()
             }
+        }
+
+        binding.settingBtn.setOnClickListener {
+            val intent = Intent(this, SettingActivity::class.java)
+            startActivity(intent)
         }
     }
 }
