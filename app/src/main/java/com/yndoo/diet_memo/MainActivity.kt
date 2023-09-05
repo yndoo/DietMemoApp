@@ -2,6 +2,7 @@ package com.yndoo.diet_memo
 
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -12,26 +13,32 @@ import android.widget.EditText
 import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
+import com.bumptech.glide.Glide
 import com.google.android.play.integrity.internal.m
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import com.yndoo.diet_memo.databinding.ActivityMainBinding
+import java.net.URI
 import java.util.Calendar
 import java.util.GregorianCalendar
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var auth: FirebaseAuth
 
     val dataModelList = mutableListOf<DataModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        auth = Firebase.auth
 
         val database = Firebase.database
         val myRef = database.getReference("myMemo")
@@ -40,9 +47,29 @@ class MainActivity : AppCompatActivity() {
         val myadapter = ListViewAdapter(dataModelList)
         listView.adapter = myadapter
 
+
+        val storage = Firebase.storage //storage 인스턴스 생성
+        val storageRef = storage.getReference("image") //storage 참조
+        val filename = auth.currentUser!!.uid
+        val imageRef = storageRef.child("${filename}.png")
+
+        //storage에서 이미지 가져와서 보여주기
+        val downloadTask = imageRef.downloadUrl
+        downloadTask.addOnSuccessListener { uri ->
+            //파일 다운로드 성공
+            Glide.with(this)
+                .load(uri)
+                .placeholder(R.drawable.icon_profile)
+                .into(binding.userProfile)
+            binding.userProfile.setBackgroundResource(R.drawable.radius)
+        }.addOnFailureListener {
+            //파일 다운로드 실패
+        }
+
+
         // listView에 넣을 메모 목록 Firebase에서 가져오기
         // .orderByChild("date") <<를 추가하여 날짜순 정렬
-        myRef.child(Firebase.auth.currentUser!!.uid).orderByChild("date").addValueEventListener(object: ValueEventListener{
+        myRef.child(Firebase.auth.currentUser!!.uid).child("memo").orderByChild("date").addValueEventListener(object: ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 dataModelList.clear()
 
@@ -106,7 +133,7 @@ class MainActivity : AppCompatActivity() {
                 val model = DataModel(dateText, workoutMemo, dietMemo)
 
                 val database = Firebase.database
-                val myRef = database.getReference("myMemo").child(Firebase.auth.currentUser!!.uid)
+                val myRef = database.getReference("myMemo").child(Firebase.auth.currentUser!!.uid).child("memo")
 
                 myRef.push().setValue(model)
 
@@ -118,6 +145,7 @@ class MainActivity : AppCompatActivity() {
         binding.settingBtn.setOnClickListener {
             val intent = Intent(this, SettingActivity::class.java)
             startActivity(intent)
+            finish()
         }
     }
 }
