@@ -18,7 +18,19 @@
         android:textColor="@color/myblue"
         android:fontFamily="@font/bmjua_ttf"
         android:gravity="center"
-        android:text="다이어트는 오늘부터"/>
+        android:text="영민이의\n🤍운동과 식단 기록🤍"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:textColor="@color/myblue"
+        android:fontFamily="@font/bmjua_ttf"
+        android:layout_marginBottom="20dp"
+        android:gravity="center"
+        android:text="만든 사람 배연두"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
