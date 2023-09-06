@@ -6,7 +6,7 @@
     <TextView
         android:id="@+id/listViewDateArea"
         android:text="date"
-        android:textSize="25sp"
+        android:textSize="20sp"
         android:textColor="@color/black"
         android:layout_gravity="center"
         android:layout_margin="10dp"

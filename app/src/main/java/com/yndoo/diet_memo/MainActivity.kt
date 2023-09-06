@@ -11,6 +11,8 @@ import android.widget.Button
 import android.widget.DatePicker
 import android.widget.EditText
 import android.widget.ListView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import com.bumptech.glide.Glide
@@ -66,6 +68,10 @@ class MainActivity : AppCompatActivity() {
             //파일 다운로드 실패
         }
 
+        //firebase에서 사용자 닉네임 가져오기
+        myRef.child(auth.currentUser!!.uid).child("nickname").get().addOnSuccessListener {result ->
+            findViewById<TextView>(R.id.userNameMain).setText(result.value.toString())
+        }
 
         // listView에 넣을 메모 목록 Firebase에서 가져오기
         // .orderByChild("date") <<를 추가하여 날짜순 정렬
@@ -130,15 +136,19 @@ class MainActivity : AppCompatActivity() {
                 val workoutMemo = mAlertDialog.findViewById<EditText>(R.id.workoutMemo)?.text.toString()
                 val dietMemo = mAlertDialog.findViewById<EditText>(R.id.dietMemo)?.text.toString()
 
-                val model = DataModel(dateText, workoutMemo, dietMemo)
+                if (dateText == ""){
+                    Toast.makeText(this,"날짜를 선택하세요.",Toast.LENGTH_LONG).show()
+                }else{
+                    val model = DataModel(dateText, workoutMemo, dietMemo)
 
-                val database = Firebase.database
-                val myRef = database.getReference("myMemo").child(Firebase.auth.currentUser!!.uid).child("memo")
+                    val database = Firebase.database
+                    val myRef = database.getReference("myMemo").child(Firebase.auth.currentUser!!.uid).child("memo")
 
-                myRef.push().setValue(model)
+                    myRef.push().setValue(model)
 
-                // 저장했으면 다이얼로그 닫기
-                mAlertDialog.dismiss()
+                    // 저장했으면 다이얼로그 닫기
+                    mAlertDialog.dismiss()
+                }
             }
         }
 
