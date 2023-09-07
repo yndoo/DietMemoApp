@@ -45,10 +45,12 @@ class SettingActivity : AppCompatActivity() {
         val database = Firebase.database
         val myRef = database.getReference("myMemo")
 
+        val filename = auth.currentUser!!.uid
         val storage = Firebase.storage //storage 인스턴스 생성
         val storageRef = storage.getReference("image") //storage 참조
-        val filename = auth.currentUser!!.uid
         val imageRef = storageRef.child("${filename}.png")
+
+
 
         //storage에서 이미지 가져와서 보여주기
         val downloadTask = imageRef.downloadUrl
@@ -71,6 +73,7 @@ class SettingActivity : AppCompatActivity() {
             if(result.value!=null){ //email계정있으면
                 //Log.d("이메일 데이터가 없어도 null이 안뜨는것같다",result.toString())
                 binding.userEmail.text = result.value.toString()
+                binding.emailLinkBtn.visibility = View.GONE
                 binding.emailLoginBtn.visibility = View.GONE
             }else if(result.value==null){ //email계정없으면
                 binding.userEmail.text = "익명 계정"
@@ -110,10 +113,10 @@ class SettingActivity : AppCompatActivity() {
         }
 
         //계정 연동(영구 계정 변환)
-        val emailLogin = binding.emailLoginBtn
-        emailLogin.setOnClickListener {
-            val intent = intent
-            val emailLink = intent.data.toString()
+        val emailLinkBtn = binding.emailLinkBtn
+        emailLinkBtn.setOnClickListener {
+            //val intent = intent
+            //val emailLink = intent.data.toString()
             val emailArea = binding.emailArea
             val pwArea = binding.pwArea
             val Ok = binding.linkOkBtn
@@ -121,34 +124,37 @@ class SettingActivity : AppCompatActivity() {
             Ok.visibility = View.VISIBLE
             pwArea.visibility = View.VISIBLE
             Ok.setOnClickListener {
-                flag = false
                 val email = emailArea.text.toString()
                 val password = pwArea.text.toString()
-                val credential = EmailAuthProvider.getCredential(email, password)
-                auth.currentUser!!.linkWithCredential(credential)
-                    .addOnCompleteListener(this) { task ->
-                        if (task.isSuccessful) {
-                            Log.d("ㅇㅇ", "linkWithCredential:success")
-                            Toast.makeText(baseContext, "계정 연동 성공", Toast.LENGTH_SHORT,).show()
-                            myRef.child("${auth.currentUser!!.uid}").child("email").setValue(email)
 
-                            binding.userEmail.text = email
-                            emailArea.visibility = View.GONE
-                            Ok.visibility = View.GONE
-                            pwArea.visibility = View.GONE
-                            emailLogin.visibility = View.GONE
+                if(emailArea.text.isEmpty() || pwArea.text.isEmpty()){
+                    Toast.makeText(baseContext, "입력 칸이 비어있습니다.", Toast.LENGTH_LONG,).show()
+                }
+                else{
+                    flag = false
+                    val credential = EmailAuthProvider.getCredential(email, password)
+                    auth.currentUser!!.linkWithCredential(credential)
+                        .addOnCompleteListener(this) { task ->
+                            if (task.isSuccessful) {
+                                Log.d("ㅇㅇ", "linkWithCredential:success")
+                                Toast.makeText(baseContext, "계정 연동 성공", Toast.LENGTH_SHORT,).show()
+                                myRef.child("${auth.currentUser!!.uid}").child("email").setValue(email)
 
-                            val user = task.result?.user
-                            flag = true
-                        } else {
-                            Log.w("ㄴㄴ", "linkWithCredential:failure", task.exception)
-                            Toast.makeText(
-                                baseContext,
-                                "Authentication failed.",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                                binding.userEmail.text = email
+                                emailArea.visibility = View.GONE
+                                Ok.visibility = View.GONE
+                                pwArea.visibility = View.GONE
+                                emailLinkBtn.visibility = View.GONE
+                                binding.emailLoginBtn.visibility = View.GONE
+
+                                val user = task.result?.user
+                                flag = true
+                            } else {
+                                Log.w("ㄴㄴ", "linkWithCredential:failure", task.exception)
+                                Toast.makeText(baseContext, "이메일 형식이 아니거나, 비밀번호가 6자 미만입니다.", Toast.LENGTH_LONG,).show()
+                            }
                         }
-                    }
+                } //else
             } //Ok
         } //emailLogin
 /*        //로그아웃 버튼 클릭 시
@@ -156,6 +162,65 @@ class SettingActivity : AppCompatActivity() {
             Firebase.auth.signOut()
             Toast.makeText(baseContext, "로그아웃 성공", Toast.LENGTH_SHORT,).show()
         }*/
+
+        //이메일 계정이 있다면 로그인
+        binding.emailLoginBtn.setOnClickListener {
+            val emailArea = binding.emailArea
+            val pwArea = binding.pwArea
+            val Ok = binding.linkOkBtn
+            emailArea.visibility = View.VISIBLE
+            Ok.visibility = View.VISIBLE
+            pwArea.visibility = View.VISIBLE
+            Ok.setOnClickListener {
+                if(emailArea.text.isEmpty() || pwArea.text.isEmpty()){
+                    Toast.makeText(baseContext, "입력 칸이 비어있습니다.", Toast.LENGTH_LONG,).show()
+                }
+                else{
+                    //로그인
+                    val email = emailArea.text.toString()
+                    val password = pwArea.text.toString()
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(this) { task ->
+                            if (task.isSuccessful) {
+                                val user = auth.currentUser
+                                Toast.makeText(baseContext, "로그인 성공.", Toast.LENGTH_SHORT,).show()
+                                emailArea.visibility = View.GONE
+                                Ok.visibility = View.GONE
+                                pwArea.visibility = View.GONE
+                                emailLinkBtn.visibility = View.GONE
+                                binding.emailLoginBtn.visibility = View.GONE
+
+                                //닉네임 가져오기
+                                myRef.child(auth.currentUser!!.uid).child("nickname").get().addOnSuccessListener {result ->
+                                    binding.userName.setText(result.value.toString())
+                                }
+                                //사진 있으면 표시
+                                val filename = auth.currentUser!!.uid
+                                val storage = Firebase.storage //storage 인스턴스 생성
+                                val storageRef = storage.getReference("image") //storage 참조
+                                val imageRef = storageRef.child("${filename}.png")
+                                val downloadTask = imageRef.downloadUrl
+                                downloadTask.addOnSuccessListener { uri ->
+                                    //파일 다운로드 성공
+                                    Glide.with(this)
+                                        .load(uri)
+                                        .placeholder(R.drawable.icon_profile)
+                                        .into(binding.userImg)
+                                }.addOnFailureListener {
+                                    //파일 다운로드 실패
+                                }
+                                //이메일 표시
+                                binding.userEmail.text = email
+
+                            } else {
+                                Toast.makeText(baseContext, "Authentication failed.", Toast.LENGTH_SHORT,).show()
+                            }
+                        }
+                }
+
+            } //ok
+        } // binding.emailLoginBtn.setOnClickListener
+
     }//OnCreate
 
     //이미지 설정 결과 가져오기

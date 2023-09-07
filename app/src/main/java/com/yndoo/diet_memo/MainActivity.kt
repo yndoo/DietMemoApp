@@ -1,12 +1,15 @@
 package com.yndoo.diet_memo
 
 import android.app.DatePickerDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.AdapterView
 import android.widget.Button
 import android.widget.DatePicker
 import android.widget.EditText
@@ -36,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
 
     val dataModelList = mutableListOf<DataModel>()
+    val keyList = mutableListOf<String>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -49,6 +53,27 @@ class MainActivity : AppCompatActivity() {
         val myadapter = ListViewAdapter(dataModelList)
         listView.adapter = myadapter
 
+        //아이템 클릭 시 물어보고 삭제하기
+        listView.setOnItemClickListener{ parent: AdapterView<*>, view: View, position: Int, id: Long ->
+            //다이얼로그 생성
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("삭제 요청")
+                .setMessage("해당 메모를 삭제하시겠습니까?")
+                .setPositiveButton("삭제",
+                DialogInterface.OnClickListener{dialog, which ->
+                    val num = parent.getItemIdAtPosition(position).toInt()
+                    Log.d("테스트중", num.toString())
+                    val selected = keyList[num]
+                    myRef.child(Firebase.auth.currentUser!!.uid).child("memo").child(selected).removeValue()
+                })
+                .setNegativeButton("취소",
+                DialogInterface.OnClickListener{dialog, which ->
+
+                })
+            builder.show()
+
+
+        }
 
         val storage = Firebase.storage //storage 인스턴스 생성
         val storageRef = storage.getReference("image") //storage 참조
@@ -78,11 +103,13 @@ class MainActivity : AppCompatActivity() {
         myRef.child(Firebase.auth.currentUser!!.uid).child("memo").orderByChild("date").addValueEventListener(object: ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 dataModelList.clear()
+                keyList.clear()
 
                 //snapshot에는 전체가 들어있음
                 for(dataModel in snapshot.children){
-                    Log.d("Data", dataModel.toString())
-
+                    //Log.d("Data", dataModel.toString())
+                    //Log.d("테스트###", dataModel.key.toString())
+                    keyList.add(dataModel.key.toString())
                     dataModelList.add(dataModel.getValue(DataModel::class.java)!!)
                 }
                 myadapter.notifyDataSetChanged()
